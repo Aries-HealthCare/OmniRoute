@@ -76,6 +76,41 @@ export function classifyRoute(rawPath: string, method: string = "GET"): RouteCla
     };
   }
 
+  const isPublicAuthPath =
+    normalizedPath === "/login" ||
+    normalizedPath === "/forgot-password" ||
+    normalizedPath === "/callback" ||
+    normalizedPath === "/auth" ||
+    normalizedPath === "/authorize" ||
+    normalizedPath.startsWith("/auth/") ||
+    normalizedPath.startsWith("/authorize/");
+
+  if (isPublicAuthPath) {
+    return {
+      routeClass: "PUBLIC",
+      reason: "public_auth_page",
+      normalizedPath,
+    };
+  }
+
+  if (
+    normalizedPath === "/offline" ||
+    normalizedPath === "/maintenance" ||
+    normalizedPath === "/forbidden" ||
+    normalizedPath === "/healthz" ||
+    normalizedPath === "/privacy" ||
+    normalizedPath === "/terms" ||
+    normalizedPath === "/landing" ||
+    normalizedPath.startsWith("/.well-known") ||
+    /^\/(?:400|401|403|408|429|500|502|503)(?:\/|$)/.test(normalizedPath)
+  ) {
+    return {
+      routeClass: "PUBLIC",
+      reason: "public_error_page",
+      normalizedPath,
+    };
+  }
+
   if (normalizedPath.startsWith("/dashboard")) {
     return {
       routeClass: "MANAGEMENT",

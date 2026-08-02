@@ -3,10 +3,7 @@ import { PEER_IP_HEADER } from "@/server/authz/headers";
 import { resolveStampedPeer } from "@/server/authz/peerStamp";
 
 export type PublicOriginSource =
-  | "configured"
-  | "trusted-forwarded"
-  | "request-url"
-  | "direct-local-host";
+  "configured" | "trusted-forwarded" | "request-url" | "direct-local-host";
 
 export interface PublicOriginCandidate {
   origin: string;
@@ -200,7 +197,7 @@ function directLocalHostOrigin(request: Request): string | null {
   if (classifyHostLocality(peer) === "remote") return null;
 
   const rawHost = trustsForwardedHeaders(request)
-    ? firstHeaderValue(request.headers.get("x-forwarded-host")) ?? request.headers.get("host")
+    ? (firstHeaderValue(request.headers.get("x-forwarded-host")) ?? request.headers.get("host"))
     : request.headers.get("host");
   const host = sanitizeForwardedHost(rawHost);
   if (!host) return null;
@@ -242,6 +239,25 @@ export function resolvePublicOrigin(request: Request): PublicOriginCandidate {
 
   const forwarded = trustedForwardedOrigin(request);
   if (forwarded) return { origin: forwarded, source: "trusted-forwarded" };
+
+  const rawHost =
+    firstHeaderValue(request.headers.get("x-forwarded-host")) ?? request.headers.get("host");
+  const rawProto =
+    firstHeaderValue(request.headers.get("x-forwarded-proto")) ??
+    (request.url.startsWith("https") ? "https" : "http");
+  if (rawHost) {
+    const sanitizedHost = sanitizeForwardedHost(rawHost);
+    if (sanitizedHost) {
+      try {
+        return {
+          origin: normalizeOrigin(`${rawProto}://${sanitizedHost}`),
+          source: "trusted-forwarded",
+        };
+      } catch {
+        // Fall back to requestUrlOrigin
+      }
+    }
+  }
 
   const requestOrigin = requestUrlOrigin(request);
   if (requestOrigin) return { origin: requestOrigin, source: "request-url" };

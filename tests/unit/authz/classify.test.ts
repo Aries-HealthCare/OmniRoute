@@ -18,6 +18,16 @@ const cases: Case[] = [
   { name: "dashboard root", path: "/dashboard", expectedClass: "MANAGEMENT" },
   { name: "dashboard nested", path: "/dashboard/settings", expectedClass: "MANAGEMENT" },
   { name: "dashboard onboarding", path: "/dashboard/onboarding", expectedClass: "PUBLIC" },
+  { name: "login page", path: "/login", expectedClass: "PUBLIC" },
+  { name: "forgot password page", path: "/forgot-password", expectedClass: "PUBLIC" },
+  { name: "auth callback page", path: "/callback", expectedClass: "PUBLIC" },
+  { name: "offline page", path: "/offline", expectedClass: "PUBLIC" },
+  { name: "maintenance page", path: "/maintenance", expectedClass: "PUBLIC" },
+  { name: "401 page", path: "/401", expectedClass: "PUBLIC" },
+  { name: "403 page", path: "/403", expectedClass: "PUBLIC" },
+  { name: "429 page", path: "/429", expectedClass: "PUBLIC" },
+  { name: "privacy page", path: "/privacy", expectedClass: "PUBLIC" },
+  { name: "terms page", path: "/terms", expectedClass: "PUBLIC" },
 
   {
     name: "/api/v1 base",

@@ -115,6 +115,18 @@ test("runAuthzPipeline redirects unauthenticated dashboard pages to login", asyn
   assert.ok(response.headers.get("x-request-id"));
 });
 
+test("runAuthzPipeline allows unauthenticated access to /login page", async () => {
+  await forceAuthRequired();
+
+  const response = await pipeline.runAuthzPipeline(request("http://localhost/login"), {
+    enforce: true,
+  });
+
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get("x-omniroute-route-class"), "PUBLIC");
+  assert.ok(response.headers.get("x-request-id"));
+});
+
 test("runAuthzPipeline redirects unauthenticated /home to login (#2712)", async () => {
   await forceAuthRequired();
 

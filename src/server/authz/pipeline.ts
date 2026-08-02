@@ -5,7 +5,7 @@ import { isDraining } from "../../lib/gracefulShutdown";
 import { checkBodySize, getBodySizeLimit } from "../../shared/middleware/bodySizeGuard";
 import { generateRequestId } from "../../shared/utils/requestId";
 import { applyCorsHeaders } from "../cors/origins";
-import { validateBrowserMutationOrigin } from "../origin/publicOrigin";
+import { resolvePublicOrigin, validateBrowserMutationOrigin } from "../origin/publicOrigin";
 import { classifyRoute } from "./classify";
 import { validateDashboardCsrfToken } from "./csrf";
 import { classifyStampedPeerLocality } from "./peerStamp";
@@ -180,8 +180,20 @@ async function refreshDashboardSessionIfNeeded(
   }
 }
 
+function buildPublicRedirectUrl(request: NextRequest, targetPath: string): URL {
+  const publicCandidate = resolvePublicOrigin(request);
+  const basePath = request.nextUrl.basePath || "";
+  const fullPath = `${basePath}${targetPath}`;
+  try {
+    return new URL(fullPath, publicCandidate.origin);
+  } catch {
+    return new URL(fullPath, request.url);
+  }
+}
+
 function dashboardLoginRedirect(request: NextRequest, requestId: string): NextResponse {
-  const response = NextResponse.redirect(new URL(`${request.nextUrl.basePath}/login`, request.url));
+  const targetUrl = buildPublicRedirectUrl(request, "/login");
+  const response = NextResponse.redirect(targetUrl);
   response.cookies.delete("auth_token");
   stampRouteResponse(response, requestId, "MANAGEMENT");
   applyCorsHeaders(response, request);
@@ -256,9 +268,8 @@ export async function runAuthzPipeline(
   const requestId = generateRequestId();
 
   if (pathname === "/") {
-    const response = NextResponse.redirect(
-      new URL(`${request.nextUrl.basePath}/dashboard`, request.url)
-    );
+    const targetUrl = buildPublicRedirectUrl(request, "/dashboard");
+    const response = NextResponse.redirect(targetUrl);
     return stampRouteResponse(response, requestId, "MANAGEMENT");
   }
 
